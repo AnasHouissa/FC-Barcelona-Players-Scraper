@@ -41,19 +41,21 @@ def _getAllPlayers():
         return jsonify({"error": str(e)}), 500
     
 
-def scrape_rankings_data():
+def scrape_standings_data():
      result = []
+     standings = []
      played=0
      win=0
      draw=0
      lost=0
-     webRankings = req.get('https://www.fcbarcelona.fr/fr/football/equipe-premiere/classement') 
-     soupRank = BeautifulSoup(webRankings.text, 'lxml')  
-     images = soupRank.find_all('img',class_='badge-image badge-image--40 js-badge-image')
-     pts = soupRank.find_all('td',class_='table-stat-row table-stat-row--points')
-     numbers = soupRank.find_all('td',class_='table-stat-row')
-     team_names = soupRank.find_all('span',class_='team-row__name--short')
-     
+     webStandings = req.get('https://www.fcbarcelona.com/en/football/first-team/standings') 
+     soupStandings = BeautifulSoup(webStandings.text, 'lxml')  
+     images = soupStandings.find_all('img',class_='badge-image badge-image--40 js-badge-image')
+     pts = soupStandings.find_all('td',class_='table-stat-row table-stat-row--points')
+     numbers = soupStandings.find_all('td',class_='table-stat-row')
+     team_names = soupStandings.find_all('span',class_='team-row__name--short')
+     last_updated = soupStandings.find('div',class_='standings-pane-header__last-updated')
+     result.append({"date":last_updated.text})
     
      for i in range(len(images)):
         
@@ -78,16 +80,16 @@ def scrape_rankings_data():
              "lost": numbers[lost].text.replace("\n","").replace(" ",""),
              "team": team_names[i].text.replace("\n","").replace(" ",""),
                 }
-        result.append(data)
-    
- 
+        standings.append(data)
+     result.append({"standings":standings})
+     
      return result
 
-@app.route('/rankings', methods=['GET'])
-def _getRankings():
+@app.route('/standings', methods=['GET'])
+def _getStandings():
     try:
         
-        return jsonify(scrape_rankings_data())
+        return jsonify(scrape_standings_data())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
