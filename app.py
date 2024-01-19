@@ -33,10 +33,61 @@ def scrape_players_data():
     
 
 @app.route('/getPlayers', methods=['GET'])
-def _getAllPlayer():
+def _getAllPlayers():
     try:
         data_list = scrape_players_data()
         return jsonify(data_list)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+def scrape_rankings_data():
+     result = []
+     played=0
+     win=0
+     draw=0
+     lost=0
+     webRankings = req.get('https://www.fcbarcelona.fr/fr/football/equipe-premiere/classement') 
+     soupRank = BeautifulSoup(webRankings.text, 'lxml')  
+     images = soupRank.find_all('img',class_='badge-image badge-image--40 js-badge-image')
+     pts = soupRank.find_all('td',class_='table-stat-row table-stat-row--points')
+     numbers = soupRank.find_all('td',class_='table-stat-row')
+     team_names = soupRank.find_all('span',class_='team-row__name--short')
+     
+    
+     for i in range(len(images)):
+        
+        if(i<1):
+         played=i+1
+         win=i+2
+         draw=i+3
+         lost=i+4
+        elif (i>=1):
+         played=played+8
+         win=win+8
+         draw=draw+8
+         lost=lost+8
+
+        
+        data = {
+             "image": "https:"+(images[i]["src"]).replace(";",""),
+             "pts": pts[i].text.replace("\n","").replace(" ",""),
+             "played": numbers[played].text.replace("\n","").replace(" ",""),
+             "win": numbers[win].text.replace("\n","").replace(" ",""),
+             "draw": numbers[draw].text.replace("\n","").replace(" ",""),
+             "lost": numbers[lost].text.replace("\n","").replace(" ",""),
+             "team": team_names[i].text.replace("\n","").replace(" ",""),
+                }
+        result.append(data)
+    
+ 
+     return result
+
+@app.route('/rankings', methods=['GET'])
+def _getRankings():
+    try:
+        
+        return jsonify(scrape_rankings_data())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
